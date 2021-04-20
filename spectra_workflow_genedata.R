@@ -18,8 +18,8 @@ library(genedataRutils)
 # Here all parameter for the execution of the annotation workflow are set.
 # ==============================================================================
 # set project folder -----------------------------------------------------------
-project_root_pos <- "E:/BGC/Project Data/LipidAnalysis/Atkinson/20191120_Exosomes/20191120_ExosomesLipidsPos"
-project_root_neg <- "E:/BGC/Project Data/LipidAnalysis/Atkinson/20191120_Exosomes/20191120_ExosomesLipidsNeg"
+project_root_pos <- "K:/Data_processed/20201030_CelegansPathogenRPLipidPos"
+project_root_neg <- "K:/Data_processed/20201030_CelegansPathogenRPLipidNeg"
 
 # set tolerances ---------------------------------------------------------------
 tolerance = 0.005
@@ -28,7 +28,7 @@ rtTolerance = 0.1
 
 # set allowed adducts ----------------------------------------------------------
 adducts_pos <- c("[M+H]+", "[M+Na]+", "[M+NH4]+")
-adducts_neg <- c("[M-H]-", "[M+FA-H]-")
+adducts_neg <- c("[M-H]-", "[M+CHO2]-")
 
 # filtering function -----------------------------------------------------------
 filter <- TRUE
@@ -742,4 +742,26 @@ parameter <- ls()
 # 
 # This block performs matching of positive and negative mode data based on RT.
 # ==============================================================================
-if(!is.na(project_root_pos) & !is.na(project_root_neg)) {}
+if(!is.na(project_root_pos) & !is.na(project_root_neg)) {
+  
+  # load MS1 data (positive) ---------------------------------------------------
+  ms1_cluster_pos <- readGda(list.files(project_root_pos,
+                                        pattern = "_Cluster.gda$",
+                                        full.names = TRUE))
+  
+  # load MS1 data (negative) ---------------------------------------------------
+  ms1_cluster_neg <- readGda(list.files(project_root_neg,
+                                        pattern = "_Cluster.gda$",
+                                        full.names = TRUE))
+  
+  match_df <- matchIonMode(ms1_cluster_pos,
+                           ms1_cluster_neg,
+                           pos_adducts = adducts_pos,
+                           neg_adducts = adducts_neg,
+                           tolerance = tolerance,
+                           ppm = ppm,
+                           rtOffset = 0,
+                           rtimeTolerance = rtTolerance)
+  
+  
+}
