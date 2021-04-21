@@ -27,6 +27,9 @@ ppm = 0
 rtTolerance = 0.1
 
 # set allowed adducts ----------------------------------------------------------
+# The adduct information has to conform the notation used in MetaboCoreUtils
+# check MetaboCoreUtils::adductNames("positive") or 
+# MetaboCoreUtils::adductNames("negative")
 adducts_pos <- c("[M+H]+", "[M+Na]+", "[M+NH4]+")
 adducts_neg <- c("[M-H]-", "[M+CHO2]-")
 
@@ -208,12 +211,16 @@ if(!is.na(project_root_pos)) {
   
   for(ms1_library in ms1_libraries) {
     
+    ms1_library_data <- read_tsv(ms1_library)
     
-    if(grepl("inhouse", ms1_library)) {
-      
-      ms1_library_data <- read_tsv(ms1_library) %>% filter(adduct %in% adducts_pos)
-      
-      if(nrow(ms1_library_data) > 0) {
+    # correction of adducts
+    # no correction required at the moment
+    
+    ms1_library_data <- ms1_library_data %>% filter(adduct %in% adducts_pos)
+    
+    
+    if(nrow(ms1_library_data) > 0 && grepl("inhouse", ms1_library)) {
+
         
         result <- annotateMz(ms1_cluster,
                              ms1_library_data,
@@ -224,13 +231,10 @@ if(!is.na(project_root_pos)) {
         write_tsv(result, paste0("MS1_results/result_",
                                  basename(ms1_library),
                                  ".tsv"))
-      }
+
       
-    } else {
-      
-      ms1_library_data <- read_tsv(ms1_library) %>% filter(adduct %in% adducts_pos)
-      
-      if(nrow(ms1_library_data) > 0) {
+    } else if(nrow(ms1_library_data) > 0) {
+
         
         result <- annotateMz(ms1_cluster,
                              ms1_library_data,
@@ -241,7 +245,7 @@ if(!is.na(project_root_pos)) {
         write_tsv(result, paste0("MS1_results/result_",
                                  basename(ms1_library),
                                  ".tsv"))
-      }
+      
     }
   }
   
@@ -278,6 +282,9 @@ if(!is.na(project_root_pos)) {
                                      backend = MsBackendDataFrame())
       
     }
+    
+    # correction of adducts
+    # no correction required in pos mode so far
     
     # filter based on adducts
     ms2_library_spectra <- ms2_library_spectra[ms2_library_spectra$adduct %in% adducts_pos]
@@ -558,41 +565,42 @@ if(!is.na(project_root_neg)) {
   
   for(ms1_library in ms1_libraries) {
     
+    ms1_library_data <- read_tsv(ms1_library)
     
-    if(grepl("inhouse", ms1_library)) {
+    # correction of adducts
+    ms1_library_data$adduct <- str_replace(ms1_library_data$adduct, "\\[M\\+FA\\-H\\]\\-", "[M+CHO2]-")
+    ms1_library_data$adduct <- str_replace(ms1_library_data$adduct, "\\[M\\+Hac\\-H\\]\\-", "[M+C2H3O2]-")
+    ms1_library_data$adduct <- str_replace(ms1_library_data$adduct, "\\[M\\+HAc\\-H\\]\\-", "[M+C2H3O2]-")
+    
+    ms1_library_data <- ms1_library_data %>% filter(adduct %in% adducts_neg)
+    
+    if(nrow(ms1_library_data) > 0 && grepl("inhouse", ms1_library)) {
       
-      ms1_library_data <- read_tsv(ms1_library) %>% filter(adduct %in% adducts_neg)
       
-      if(nrow(ms1_library_data) > 0) {
-        
-        result <- annotateMz(ms1_cluster,
-                             ms1_library_data,
-                             tolerance = tolerance,
-                             ppm = ppm,
-                             adducts = adducts_neg)
-        
-        write_tsv(result, paste0("MS1_results/result_",
-                                 basename(ms1_library),
-                                 ".tsv"))
-      }
+      result <- annotateMz(ms1_cluster,
+                           ms1_library_data,
+                           tolerance = tolerance,
+                           ppm = ppm,
+                           adducts = adducts_neg)
       
-    } else {
+      write_tsv(result, paste0("MS1_results/result_",
+                               basename(ms1_library),
+                               ".tsv"))
       
-      ms1_library_data <- read_tsv(ms1_library) %>% filter(adduct %in% adducts_neg)
       
-      if(nrow(ms1_library_data) > 0) {
-        
-        result <- annotateMz(ms1_cluster,
-                             ms1_library_data,
-                             tolerance = tolerance,
-                             ppm = ppm,
-                             adducts = adducts_neg)
-        
-        write_tsv(result, paste0("MS1_results/result_",
-                                 basename(ms1_library),
-                                 ".tsv"))
-        
-      }
+    } else if(nrow(ms1_library_data) > 0) {
+      
+      
+      result <- annotateMz(ms1_cluster,
+                           ms1_library_data,
+                           tolerance = tolerance,
+                           ppm = ppm,
+                           adducts = adducts_neg)
+      
+      write_tsv(result, paste0("MS1_results/result_",
+                               basename(ms1_library),
+                               ".tsv"))
+      
     }
   }
   
@@ -629,6 +637,11 @@ if(!is.na(project_root_neg)) {
                                      backend = MsBackendDataFrame())
       
     }
+    
+    # correction of adducts
+    ms2_library_spectra$adduct <- str_replace(ms2_library_spectra$adduct, "\\[M\\+FA\\-H\\]\\-", "[M+CHO2]-")
+    ms2_library_spectra$adduct <- str_replace(ms2_library_spectra$adduct, "\\[M\\+Hac\\-H\\]\\-", "[M+C2H3O2]-")
+    ms2_library_spectra$adduct <- str_replace(ms2_library_spectra$adduct, "\\[M\\+HAc\\-H\\]\\-", "[M+C2H3O2]-")
     
     # filter based on adducts
     ms2_library_spectra <- ms2_library_spectra[ms2_library_spectra$adduct %in% adducts_neg]
