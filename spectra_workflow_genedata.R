@@ -18,8 +18,8 @@ library(genedataRutils)
 # Here all parameter for the execution of the annotation workflow are set.
 # ==============================================================================
 # set project folder -----------------------------------------------------------
-project_root_pos <- "K:/Data_processed/20201030_CelegansPathogenRPLipidPos"
-project_root_neg <- "K:/Data_processed/20201030_CelegansPathogenRPLipidNeg"
+project_root_pos <- "K:/Data_processed/20210421_PathogenMetabolomicsNew/20210219_CelegansPathogenMicrobiome_RP_pos"
+project_root_neg <- "K:/Data_processed/20210421_PathogenMetabolomicsNew/20210222_CelegansPathogenMicrobiome_RP_neg"
 
 # set tolerances ---------------------------------------------------------------
 tolerance = 0.005
@@ -39,9 +39,12 @@ my_filter <- function(x) {
   x > max(x, na.rm = TRUE) / 10
 }
 
-#register(bpstart(SnowParam(6, progressbar = TRUE)))
+# some housekeeping
 script_root <- dirname(rstudioapi::getActiveDocumentContext()$path)
 parameter <- ls()
+
+# parallelization of processes, if wanted --------------------------------------
+register(bpstart(SnowParam(12, progressbar = TRUE)))
 
 # ==============================================================================
 # Perform annotation for positive mode data
@@ -119,7 +122,7 @@ if(!is.na(project_root_pos)) {
   # TODO add final consolidation strategy
   ms1_spectra_comb <- ms1_spectra %>% 
     combineSpectra(f = ms1_spectra$CLUSTER_ID,
-                   #p = ms1_spectra$CLUSTER_ID,
+                   p = ms1_spectra$CLUSTER_ID,
                    intensityFun = base::sum,
                    mzFun = base::mean,
                    tolerance = tolerance,
@@ -153,7 +156,7 @@ if(!is.na(project_root_pos)) {
   # TODO add final consolidation strategy
   ms2_spectra_comb <- ms2_spectra %>% 
     combineSpectra(f = ms2_spectra$CLUSTER_ID,
-                   #p = ms2_spectra$CLUSTER_ID,
+                   p = ms2_spectra$CLUSTER_ID,
                    intensityFun = base::sum,
                    mzFun = base::mean,
                    tolerance = tolerance,
@@ -182,6 +185,11 @@ if(!is.na(project_root_pos)) {
   export(ms2_spectra_comb,
          MsBackendMgf(),
          file = "MS2_consolidated_R/ms2_spectra_combined.mgf")
+  
+  # write overview on MS2 data -------------------------------------------------
+  table(ms2_spectra$CLUSTER_ID) %>%
+    as.data.frame() %>% as_tibble() %>% 
+    write_tsv("MS2_consolidated_R_/ms2_spectra_overview.tsv")
   
   # write Sirius files ---------------------------------------------------------
   # write to contain all MS2 spectra
@@ -471,7 +479,7 @@ if(!is.na(project_root_neg)) {
   # TODO add final consolidation strategy
   ms1_spectra_comb <- ms1_spectra %>% 
     combineSpectra(f = ms1_spectra$CLUSTER_ID,
-                   #p = ms1_spectra$CLUSTER_ID,
+                   p = ms1_spectra$CLUSTER_ID,
                    intensityFun = base::sum,
                    mzFun = base::mean,
                    tolerance = tolerance,
@@ -505,7 +513,7 @@ if(!is.na(project_root_neg)) {
   # TODO add final consolidation strategy
   ms2_spectra_comb <- ms2_spectra %>% 
     combineSpectra(f = ms2_spectra$CLUSTER_ID,
-                   #p = ms2_spectra$CLUSTER_ID,
+                   p = ms2_spectra$CLUSTER_ID,
                    intensityFun = base::sum,
                    mzFun = base::mean,
                    tolerance = tolerance,
@@ -536,6 +544,11 @@ if(!is.na(project_root_neg)) {
   export(ms2_spectra_comb,
          MsBackendMgf(),
          file = "MS2_consolidated_R/ms2_spectra_combined.mgf")
+  
+  # write overview on MS2 data -------------------------------------------------
+  table(ms2_spectra$CLUSTER_ID) %>%
+    as.data.frame() %>% as_tibble() %>% 
+    write_tsv("MS2_consolidated_R_/ms2_spectra_overview.tsv")
   
   # write Sirius files ---------------------------------------------------------
   # write to contain all MS2 spectra
@@ -778,3 +791,6 @@ if(!is.na(project_root_pos) & !is.na(project_root_neg)) {
   
   
 }
+
+# stop parallel backend --------------------------------------------------------
+bpstop()
