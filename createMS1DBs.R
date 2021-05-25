@@ -1,5 +1,6 @@
 # load required libraries ------------------------------------------------------
 library(tidyverse)
+library(dplyr)
 library(readxl)
 library(reshape2)
 library(MetaboCoreUtils)
